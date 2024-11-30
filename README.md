@@ -1,7 +1,7 @@
 # Data-Visualization-NY
 This project is an interactive data visualization tool that presents data related to New York City, including AirBNB listings, parties, and bars. The application utilizes modern web technologies such as HTML, CSS, and JavaScript, along with libraries like D3.js and PapaParse for visualizing the data. The aim of the project is to provide a visually appealing and user-friendly way to explore different datasets through various graph types and map visualizations.
 
-Features
+#Features
 Graph Visualizations: Pie charts and bar graphs displaying the distribution of AirBNBs, parties, and bars in New York City.
 Map View: Interactive map to explore the geospatial distribution of data points.
 Word Cloud: Visualize the frequency of keywords related to the datasets.

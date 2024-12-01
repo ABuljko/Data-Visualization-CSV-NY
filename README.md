@@ -67,22 +67,5 @@ Key CSS Styles:
   Map Container:
     The map initially appears hidden but can "grow" to fill the screen on demand using smooth transitions.
     
-Contributing
-Feel free to fork this repository and contribute! Whether it's bug fixes, new features, or improvements, contributions are always welcome.
-
-1.How to Contribute:
-Fork the repository on GitHub.
-
-2.Clone the forked repository:
-git clone https://github.com/yourusername/nyc-data-visualization.git
-
-3.Create a new branch for your changes:
-git checkout -b feature-branch
-
-4.Make changes and commit them:
-git commit -am 'Add new feature or fix bug'
-
-5.Push your changes:
-git push origin feature-branch
 
 6.Open a Pull Request.

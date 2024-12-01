@@ -1,0 +1,231 @@
+/* Importing the Poppins font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+/* General styles for the HTML and body */
+html,
+body {
+    /* Set the height of the page to 400% to allow for scrolling */
+    height: 400%;
+    
+    /* Remove any default margins and padding */
+    margin: 0;
+    padding: 0;
+    
+    /* Use the Poppins font family throughout the page */
+    font-family: Poppins, sans-serif;
+    
+    /* Set a dark gradient background for the page */
+    background: linear-gradient(135deg, #0b061f, #0b061f);
+    
+    /* Set text color to almost white */
+    color: #fdfdfd;
+    
+    /* Use flexbox to layout the body, stack elements vertically */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Style for the map container that will be toggled */
+#map {
+    /* Initially, hide the map container */
+    display: none;
+    
+    /* Set initial width and height to 0 (hidden) */
+    width: 0;
+    height: 0;
+    
+    /* Apply smooth transition when the size of the map changes */
+    transition: width 2s ease, height 2s ease;
+}
+
+/* When the map container grows (has the 'grow' class), change the size */
+#map.grow {
+    /* Set width to 100% of the viewport height (full screen width) */
+    width: 100vh;
+    
+    /* Set a fixed height for the map */
+    height: 600px;
+}
+
+/* Style for the loading container, used while the map is being prepared */
+#loading {
+    /* Use flexbox to center the loading spinner */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    /* Set height to cover the entire viewport */
+    height: 100vh;
+}
+
+/* Style for the main title (h1) */
+h1 {
+    /* Center align the text */
+    text-align: center;
+    
+    /* Add top margin for spacing */
+    margin-top: 20px;
+    
+    /* Set a large font size for the title */
+    font-size: 4.5rem;
+    
+    /* Add space at the bottom of the title */
+    margin-bottom: 4rem;
+    
+    /* Set the color of the text to white */
+    color: #fdfdfd;
+}
+
+/* Style for the popup content inside the leaflet map (if used) */
+.leaflet-popup-content-wrapper {
+    /* Set a readable font size and line height for the popup content */
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Style for custom cluster icons on the map */
+.custom-cluster-icon {
+    /* Make the cluster icons circular */
+    border-radius: 50%;
+    
+    /* Align the text inside the icon to the center */
+    text-align: center;
+    
+    /* Set text color to white */
+    color: #fff;
+    
+    /* Make the font bold */
+    font-weight: bold;
+}
+
+/* Style for the buttons */
+button {
+    /* Add margin around the buttons */
+    margin: 10px;
+    
+    /* Make the buttons inline-block to allow for easy positioning */
+    display: inline-block;
+    
+    /* Add padding for better button size */
+    padding: 1.2rem 2.8rem;
+    
+    /* Set a purple background color for the button */
+    background: #754ef9;
+    
+    /* Round the button corners */
+    border-radius: .6rem;
+    
+    /* Add a shadow effect for the button */
+    box-shadow: 0 .2rem .5rem rgba(0, 0, 0, .7);
+    
+    /* Set the font size for the button text */
+    font-size: 1.6rem;
+    
+    /* Set text color to white */
+    color: #fdfdfd;
+    
+    /* Add letter-spacing for better readability */
+    letter-spacing: .1rem;
+    
+    /* Make the font weight bold */
+    font-weight: 600;
+    
+    /* Make the border transparent initially */
+    border: .2rem solid transparent;
+    
+    /* Add a smooth transition effect for button interactions */
+    transition: .5s ease;
+}
+
+/* Change button appearance when hovered */
+button:hover {
+    /* Make the background transparent on hover */
+    background: transparent;
+    
+    /* Change text color to purple */
+    color: #754ef9;
+    
+    /* Add purple border on hover */
+    border-color: #754ef9;
+}
+
+/* Style for the side containers that hold banners (left and right) */
+.side-container {
+    /* Set a fixed width for the side containers */
+    width: 20%;
+    
+    /* Set the height to fill the full viewport */
+    height: 100%;
+    
+    /* Position the side containers absolutely */
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    
+    /* Set a translucent purple background color */
+    background-color: #512a9b13;
+    
+    /* Hide any overflowing content (ensures clean borders) */
+    overflow: hidden;
+    
+    /* Set z-index to ensure the side containers are behind the content */
+    z-index: 0;
+}
+
+/* Style for the left banner */
+#left-banner {
+    /* Position the left banner to the left side of the page */
+    left: 0;
+}
+
+/* Style for the right banner */
+#right-banner {
+    /* Position the right banner to the right side of the page */
+    right: 0;
+}
+
+/* Style for the center content that holds the charts */
+.center-content {
+    /* Set width to 60% of the page */
+    width: 60%;
+    
+    /* Center align the text within the container */
+    text-align: center;
+    
+    /* Set z-index to ensure content stays above side containers */
+    z-index: 1;
+    
+    /* Center the content within the container */
+    margin: auto;
+}
+
+/* Style for each individual chart container */
+.chart {
+    /* Display the charts inline-block */
+    display: inline-block;
+    
+    /* Set width to 45% of the container width */
+    width: 45%;
+    
+    /* Add margin between the charts */
+    margin: 2.5%;
+    
+    /* Center align the chart text */
+    text-align: center;
+}
+
+/* Style for the text labels inside the pie chart arcs */
+.arc text {
+    /* Set a small font size for the labels */
+    font: 10px sans-serif;
+    
+    /* Align the text to the center of the arc */
+    text-anchor: middle;
+}
+
+/* Style for the paths (slices) of the pie chart */
+.arc path {
+    /* Set the stroke color to white for the slice borders */
+    stroke: #fff;
+}

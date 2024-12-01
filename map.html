@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- Basic metadata and page configuration -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>CSV Data on Map</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Leaflet CSS for interactive maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- MarkerCluster CSS for clustering map markers -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+
+    <!-- Link to a custom CSS file for additional styling -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Leaflet JS library for interactive maps -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="">
+    </script>
+    <!-- MarkerCluster JS library for grouping markers -->
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <!-- PapaParse library for parsing CSV files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"
+        integrity="sha512-dfX5uYVXzyU8+KHqj8bjo7UkOdg18PaOtpa48djpNbZHwExddghZ+ZmzWT06R5v6NSk3ZUfsH6FNEDepLx9hPQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+
+<body>
+    <!-- Page title -->
+    <h1>The City of New York</h1>
+
+    <!-- Loading spinner while map data is being processed -->
+    <div id="loading">
+        <img src="marks/ZhKG.gif" alt="Loading..." />
+    </div>
+
+    <!-- Map container where Leaflet will render the map -->
+    <div id="map"></div>
+
+    <!-- Button to return to the index page -->
+    <button onclick="location.href='index.html'">Return</button>
+
+    <script>
+        // Initialize the map and set the default view to New York City
+        var map = L.map('map').setView([40.7128, -74.0060], 11);
+
+        // Add OpenStreetMap tiles to the map
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        // Define custom icons for different types of markers
+        var icons = {
+            'Housing': L.icon({
+                iconUrl: 'marks/housing.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            }),
+            'Party': L.icon({
+                iconUrl: 'marks/party_6335615.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            }),
+            'Bar': L.icon({
+                iconUrl: 'marks/bar-2027075_960_720.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            })
+        };
+
+        // Function to create clustered marker groups with a specific color
+        function createClusterGroup(color) {
+            return L.markerClusterGroup({
+                iconCreateFunction: function (cluster) {
+                    var markers = cluster.getAllChildMarkers();
+                    var n = markers.length; // Count of markers in the cluster
+                    var size = Math.min(60, 20 + n * 2); // Dynamically adjust cluster size
+                    return L.divIcon({
+                        html: '<div style="background-color:' + color + ';width:' + size + 'px;height:' + size + 'px;border-radius:50%;line-height:' + size + 'px;text-align:center;">' + n + '</div>',
+                        className: 'custom-cluster-icon'
+                    });
+                }
+            });
+        }
+
+        // Define clusters for Housing, Party, and Bar layers
+        var clusters = {
+            'Housing': createClusterGroup('#754ef9'), // Purple for Housing
+            'Party': createClusterGroup('red'), // Red for Party
+            'Bar': createClusterGroup('#00bfff')  // Blue for Bar
+        };
+
+        // Function to parse CSV data and add it to the map
+        function plotCSVData(csvData, type, clusterGroup, callback) {
+            Papa.parse(csvData, {
+                header: true,
+                complete: function (results) {
+                    var data = results.data; // Parsed CSV data
+
+                    // Loop through each row in the CSV file
+                    data.forEach(function (row) {
+                        var latitude = parseFloat(row['Latitude'] || row['latitude'] || row['lattitude']);
+                        var longitude = parseFloat(row['Longitude'] || row['longitude']);
+
+                        // Ensure valid latitude and longitude
+                        if (!isNaN(latitude) && !isNaN(longitude)) {
+                            var icon = icons[type]; // Select appropriate icon
+                            var marker = L.marker([latitude, longitude], { icon: icon });
+
+                            // Generate popup content based on the type of data
+                            var popupContent = '<strong>Type:</strong> ' + type + '<br>';
+                            if (type === 'Housing') {
+                                popupContent += '<strong>Name:</strong> ' + row['name'] + '<br>';
+                                popupContent += '<strong>Neighbourhood Group:</strong> ' + row['neighbourhood_group'] + '<br>';
+                                popupContent += '<strong>Room Type:</strong> ' + row['room_type'] + '<br>';
+                                popupContent += '<strong>Price per Night:</strong> ' + row['price'];
+                            } else if (type === 'Party') {
+                                popupContent += '<strong>Location Type:</strong> ' + row['Location Type'] + '<br>';
+                                popupContent += '<strong>Borough:</strong> ' + row['Borough'];
+                            } else if (type === 'Bar') {
+                                popupContent += '<strong>City:</strong> ' + row['City'] + '<br>';
+                                popupContent += '<strong>Borough:</strong> ' + row['Borough'];
+                            }
+
+                            // Bind popup to marker and add it to the cluster group
+                            marker.bindPopup(popupContent);
+                            clusterGroup.addLayer(marker);
+                        }
+                    });
+
+                    callback(); // Call callback after processing data
+                }
+            });
+        }
+
+        // Add cluster layers to the map
+        map.addLayer(clusters['Housing']);
+        map.addLayer(clusters['Party']);
+        map.addLayer(clusters['Bar']);
+
+        // Counter to track file loading progress
+        var filesLoaded = 0;
+
+        // Function to check if all files are loaded
+        function checkAllFilesLoaded() {
+            filesLoaded++;
+            if (filesLoaded === 3) { // Ensure all 3 CSV files are loaded
+                setTimeout(function () {
+                    map.invalidateSize(); // Refresh map rendering
+                }, 1000); // Add delay to ensure complete rendering
+                document.getElementById('loading').style.display = 'none'; // Hide loading spinner
+                var mapElement = document.getElementById('map');
+                mapElement.style.display = 'block'; // Show the map
+                mapElement.classList.add('grow'); // Add animation class
+            }
+        }
+
+        // Fetch CSV files and process their data
+        function fetchCSV(url, type) {
+            fetch(url)
+                .then(response => response.text())
+                .then(csvText => plotCSVData(csvText, type, clusters[type], checkAllFilesLoaded))
+                .catch(error => console.log('Error loading ${type} CSV file:', error));
+        }
+
+        // Load data for Housing, Party, and Bar categories
+        fetchCSV("CSV/AB_NYC_2019.csv", 'Housing');
+        fetchCSV("CSV/party_in_nyc.csv", 'Party');
+        fetchCSV("CSV/bar_locations.csv", 'Bar');
+
+        // Add control to toggle visibility of layers
+        var overlayMaps = {
+            "Housing": clusters['Housing'],
+            "Party": clusters['Party'],
+            "Bar": clusters['Bar']
+        };
+
+        // Add the layer control to the map
+        L.control.layers(null, overlayMaps, { collapsed: false }).addTo(map);
+    </script>
+</body>
+
+</html>

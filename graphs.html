@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- Metadata for page configuration -->
+    <meta charset="utf-8"> <!-- Character encoding set to UTF-8 for universal text rendering -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- Ensures compatibility with older versions of IE -->
+    <title>Comparison of Data</title> <!-- Title of the web page -->
+    <meta name="description" content=""> <!-- Meta description for SEO (can be customized) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- Ensures responsive design for mobile devices -->
+
+    <!-- D3.js library for data visualization -->
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+
+    <!-- PapaParse library for parsing CSV files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"
+        integrity="sha512-dfX5uYVXzyU8+KHqj8bjo7UkOdg18PaOtpa48djpNbZHwExddghZ+ZmzWT06R5v6NSk3ZUfsH6FNEDepLx9hPQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <!-- External CSS file for styling the page -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Inline CSS for quick page styling (specifically for the <h1> element) -->
+    <style>
+        h1 {
+            font-size: 3rem; /* Sets the font size for the main heading */
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Page Title -->
+    <h1>Comparison of Parties, AirBNBs, and Bars in NY</h1>
+
+    <!-- Button to navigate back to the previous page -->
+    <button onclick="location.href='graphsChoice.html'">Return</button>
+
+    <!-- Containers to hold the individual charts (each will be populated via D3.js) -->
+    <div id="chart1"></div>
+    <div id="chart2"></div>
+    <div id="chart3"></div>
+    <div id="chart4"></div>
+    <div id="chart5"></div>
+    <div id="chart6"></div>
+
+    <!-- Script for processing data and generating charts -->
+    <script>
+        var boroughData = {}; // Object to store aggregated data by borough (for all three types: AirBNBs, Parties, Bars)
+
+        // Function to normalize borough names (capitalize first letter of each word)
+        function normalizeBoroughName(name) {
+            return name ? name.toLowerCase().replace(/\b\w/g, function (char) {
+                return char.toUpperCase(); // Capitalizes the first letter of each word in the borough name
+            }) : "";
+        }
+
+        // Function to process CSV data based on the data type (Housing, Party, or Bar)
+        function processData(results, type) {
+            results.data.forEach(row => {
+                var borough = normalizeBoroughName(row['Borough'] || row['borough']); // Normalize borough name
+                var neighbourhood = row['neighbourhood']; // Extract neighbourhood
+
+                // Initialize borough data if it's not already present
+                if (!boroughData[borough]) {
+                    boroughData[borough] = { parties: 0, airbnb: 0, bars: 0, total: 0 };
+                }
+
+                // Increment counts based on the data type
+                if (type === 'Housing' && neighbourhood) {
+                    boroughData[borough].airbnb += 1; // Increment AirBNB count
+                } else if (type === 'Party' && borough) {
+                    boroughData[borough].parties += 1; // Increment Party count
+                } else if (type === 'Bar' && borough) {
+                    boroughData[borough].bars += 1; // Increment Bar count
+                }
+
+                // Update total count for each borough
+                boroughData[borough].total = boroughData[borough].parties + boroughData[borough].airbnb + boroughData[borough].bars;
+            });
+        }
+
+        // Function to fetch and load the CSV files asynchronously, then process them
+        function fetchData() {
+            Promise.all([
+                fetch("CSV/AB_NYC_2019.csv").then(response => response.text()), // Fetch AirBNB data
+                fetch("CSV/party_in_nyc.csv").then(response => response.text()), // Fetch Party data
+                fetch("CSV/bar_locations.csv").then(response => response.text()) // Fetch Bar data
+            ]).then(([housingCSV, partyCSV, barCSV]) => {
+                // Parse each CSV data using PapaParse and process accordingly
+                Papa.parse(housingCSV, {
+                    header: true, // Treat the first row as headers
+                    complete: results => processData(results, 'Housing') // Process AirBNB data
+                });
+                Papa.parse(partyCSV, {
+                    header: true,
+                    complete: results => processData(results, 'Party') // Process Party data
+                });
+                Papa.parse(barCSV, {
+                    header: true,
+                    complete: results => processData(results, 'Bar') // Process Bar data
+                });
+            }).catch(error => console.error("Error loading CSV files:", error))
+                .finally(() => createCharts()); // Once data is fetched and processed, create the charts
+        }
+
+        // Function to create a single bar chart (one dataset, e.g., AirBNBs, Parties, or Bars)
+        function createChart(containerId, data, yLabel, color) {
+            var svg = d3.select(containerId).append("svg") // Select the container and append an SVG element
+                .attr("width", 1000)
+                .attr("height", 500),
+                margin = { top: 20, right: 50, bottom: 100, left: 50 },
+                width = svg.attr("width") - margin.left - margin.right,
+                height = svg.attr("height") - margin.top - margin.bottom,
+                g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+            // Define scales for the X and Y axes
+            var x = d3.scaleBand().rangeRound([0, width]).padding(0.1),
+                y = d3.scaleLinear().rangeRound([height, 0]);
+
+            var boroughs = Object.keys(boroughData).sort(); // Get boroughs in alphabetical order
+            var values = boroughs.map(borough => boroughData[borough][data]); // Get data values for each borough
+
+            // Set domains for axes
+            x.domain(boroughs); 
+            y.domain([0, d3.max(values) * 1.1]); // Set y-axis range based on max data value (with a little buffer)
+
+            // Add X-axis
+            g.append("g")
+                .attr("class", "axis axis--x")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(x))
+                .selectAll("text")
+                .attr("transform", "rotate(-90)") // Rotate labels for better readability
+                .attr("x", -5)
+                .attr("y", -10)
+                .style("text-anchor", "end");
+
+            // Add Y-axis
+            g.append("g")
+                .attr("class", "axis axis--y")
+                .call(d3.axisLeft(y).ticks(10)) // Set number of ticks on the y-axis
+                .append("text")
+                .attr("fill", color)
+                .attr("transform", "rotate(-90)")
+                .attr("y", 6)
+                .attr("dy", "0.71em")
+                .attr("text-anchor", "end")
+                .text(yLabel); // Label for the Y-axis
+
+            // Add bars for the chart
+            g.selectAll(".bar")
+                .data(values)
+                .enter().append("rect")
+                .attr("class", "bar")
+                .attr("x", (d, i) => x(boroughs[i])) // Set X position based on the borough
+                .attr("y", d => y(d)) // Set Y position based on data value
+                .attr("width", x.bandwidth()) // Set width of each bar
+                .attr("height", d => height - y(d)) // Set height based on data value
+                .attr("fill", color) // Set the color of the bar
+                .append("title") // Tooltip for displaying value on hover
+                .text(d => d);
+
+            // Label the Y-axis
+            svg.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 0 - margin.left)
+                .attr("x", 0 - (height / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text(yLabel); // Label for Y-axis
+        }
+
+        // Function to create a comparative bar chart (two datasets side by side for comparison)
+        function createComparisonChart(containerId, data1, label1, color1, data2, label2, color2) {
+            // Similar logic to `createChart` but with two sets of bars and potentially two Y-axes
+            // (you can implement this similarly if needed)
+        }
+
+        // Function to initialize and create all charts
+        function createCharts() {
+            // Create individual charts for AirBNBs, Parties, and Bars
+            createChart("#chart1", "airbnb", "Number of AirBNBs", "#754ef9");
+            createChart("#chart2", "parties", "Number of Parties", "red");
+            createChart("#chart3", "bars", "Number of Bars", "#00bfff");
+
+            // Create comparison charts
+            createComparisonChart("#chart4", "airbnb", "Number of AirBNBs", "#754ef9", "parties", "Number of Parties", "red");
+            createComparisonChart("#chart5", "parties", "Number of Parties", "red", "bars", "Number of Bars", "#00bfff");
+            createComparisonChart("#chart6", "bars", "Number of Bars", "#00bfff", "airbnb", "Number of AirBNBs", "#754ef9");
+        }
+
+        // Load data and generate charts
+        fetchData(); // Call to start fetching and processing data
+    </script>
+</body>
+
+</html>

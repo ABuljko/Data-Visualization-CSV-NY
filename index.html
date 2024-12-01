@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- Basic metadata and page configuration -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>New York City Data Visualization</title>
+    <meta name="description" content="Data Visualization Landing Page">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- D3.js library for data visualization -->
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <!-- D3 Word Cloud layout library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-cloud/1.2.5/d3.layout.cloud.min.js"></script>
+    <!-- PapaParse library for parsing CSV files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"
+        integrity="sha512-dfX5uYVXzyU8+KHqj8bjo7UkOdg18PaOtpa48djpNbZHwExddghZ+ZmzWT06R5v6NSk3ZUfsH6FNEDepLx9hPQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <!-- Internal CSS styling -->
+    <style>
+        /* General body styling for the page */
+        body {
+            display: flex;
+            justify-content: center;
+            font-family: Poppins, sans-serif;
+            align-items: normal;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            background: #0b061f; /* Dark background */
+            color: #fdfdfd; /* White text color */
+            overflow: hidden;
+            background-size: cover;
+            flex-direction: unset;
+        }
+
+        /* Styling for buttons */
+        button {
+            display: inline-block;
+            padding: 1.2rem 2.8rem;
+            background: #754ef9; /* Purple button color */
+            border-radius: 0.6rem;
+            box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.7);
+            font-size: 1.6rem;
+            color: #fdfdfd; /* White text color */
+            letter-spacing: 0.1rem;
+            font-weight: 600;
+            border: 0.2rem solid transparent;
+            transition: 0.5s ease;
+            margin: 10px;
+        }
+
+        /* Hover effect for buttons */
+        button:hover {
+            background: transparent;
+            color: #754ef9; /* Text changes to purple */
+            border-color: #754ef9; /* Border changes to purple */
+        }
+
+        /* Heading styling */
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 4.5rem;
+            margin-bottom: 4rem;
+            color: #fdfdfd; /* White text color */
+        }
+
+        /* Side banners (left and right) */
+        .side-container {
+            width: 20%; /* Set the width for the banners */
+            height: 100%; /* Full height of the page */
+            position: absolute;
+            top: 0;
+            background-color: #512a9b13; /* Semi-transparent purple */
+            overflow: hidden;
+        }
+
+        /* Positioning the left banner */
+        #left-banner {
+            left: 0;
+        }
+
+        /* Positioning the right banner */
+        #right-banner {
+            right: 0;
+        }
+
+        /* Center content container */
+        .center-content {
+            width: 90%; /* Adjusted width for central alignment */
+            text-align: center;
+            z-index: 1; /* Ensures it stays above side banners */
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Left side banner -->
+    <div id="left-banner" class="side-container"></div>
+
+    <!-- Central content section -->
+    <div class="center-content">
+        <h1>Data Visualization</h1> <!-- Page title -->
+        <!-- Buttons to navigate to map and graphs pages -->
+        <button onclick="location.href='map.html'">Load Map</button>
+        <button onclick="location.href='graphsChoice.html'">Load Graphs</button>
+    </div>
+
+    <!-- Right side banner -->
+    <div id="right-banner" class="side-container"></div>
+
+    <!-- JavaScript functionality -->
+    <script>
+        // Load the CSV data and generate the word cloud on page load
+        document.addEventListener("DOMContentLoaded", loadCSVData);
+    </script>
+</body>
+
+</html>

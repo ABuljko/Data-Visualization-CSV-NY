@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Meta tags for character encoding and viewport settings for responsive design -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- External CSS file for styling the page -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Page title -->
+    <title>Pie Charts Data Visualisation</title>
+
+    <!-- D3.js library for data visualization -->
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+
+    <!-- PapaParse library for parsing CSV files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"
+        integrity="sha512-dfX5uYVXzyU8+KHqj8bjo7UkOdg18PaOtpa48djpNbZHwExddghZ+ZmzWT06R5v6NSk3ZUfsH6FNEDepLx9hPQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <!-- Inline styles for page styling -->
+    <style>
+        /* General body styling */
+        body {
+            font-family: Poppins, sans-serif; /* Sets the font family for the page */
+        }
+
+        /* Main heading styling */
+        h1 {
+            text-align: center; /* Centers the title */
+            color: white; /* Sets title color to white */
+            font-family: Poppins, sans-serif; /* Font family for the title */
+            font-size: 3rem; /* Font size for the title */
+        }
+
+        /* Styling for the return button */
+        button {
+            display: block; /* Makes the button a block element */
+            margin: 0 auto 20px auto; /* Centers the button and adds bottom margin */
+        }
+
+        /* Styling for each chart container */
+        .chart {
+            width: 100%; /* Make the chart container take up full width */
+            margin: 20px auto; /* Centers the chart with margin */
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Main title of the page -->
+    <h1>Comparison of Pie Charts NY</h1>
+
+    <!-- Button to return to the previous page -->
+    <button onclick="location.href='graphsChoice.html'">Return</button>
+
+    <!-- Containers for each pie chart -->
+    <div id="chart1" class="chart"></div>
+    <div id="chart2" class="chart"></div>
+    <div id="chart3" class="chart"></div>
+
+    <!-- Script for processing data and generating charts -->
+    <script>
+        // Object to store aggregated data by borough
+        var boroughData = {};
+
+        // Function to normalize borough names to lowercase and remove extra spaces
+        function normalizeBoroughName(name) {
+            return name ? name.trim().toLowerCase() : "";
+        }
+
+        // Function to capitalize the first letter of a string (used for borough names)
+        function capitalizeFirstLetter(string) {
+            return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+        }
+
+        // Function to process the data from CSV files (housing, parties, and bars)
+        function processData(results, type) {
+            // Iterate through each row of data and aggregate values by borough
+            results.data.forEach(row => {
+                var borough = normalizeBoroughName(row['Borough'] || row['borough']); // Get and normalize borough name
+                var neighbourhood = row['neighbourhood']; // Get neighbourhood (used for AirBNB data)
+
+                // Initialize borough data if not already present
+                if (!boroughData[borough]) {
+                    boroughData[borough] = { parties: 0, airbnb: 0, bars: 0, total: 0 };
+                }
+
+                // Increment counts based on the data type (Housing, Party, Bar)
+                if (type === 'Housing' && neighbourhood) {
+                    boroughData[borough].airbnb += 1; // Increment AirBNB count
+                } else if (type === 'Party' && borough) {
+                    boroughData[borough].parties += 1; // Increment Party count
+                } else if (type === 'Bar' && borough) {
+                    boroughData[borough].bars += 1; // Increment Bar count
+                }
+
+                // Update the total for each borough
+                boroughData[borough].total = boroughData[borough].parties + boroughData[borough].airbnb + boroughData[borough].bars;
+            });
+        }
+
+        // Function to fetch and process CSV data asynchronously
+        function fetchData() {
+            // Fetch data from all three CSV files (AirBNB, Party, and Bar data)
+            Promise.all([
+                fetch("CSV/AB_NYC_2019.csv").then(response => response.text()), // AirBNB data
+                fetch("CSV/party_in_nyc.csv").then(response => response.text()), // Party data
+                fetch("CSV/bar_locations.csv").then(response => response.text()) // Bar data
+            ]).then(([housingCSV, partyCSV, barCSV]) => {
+                // Parse each CSV data and process it based on type (Housing, Party, Bar)
+                Papa.parse(housingCSV, {
+                    header: true, // Use the first row as the header
+                    complete: results => processData(results, 'Housing') // Process AirBNB data
+                });
+                Papa.parse(partyCSV, {
+                    header: true,
+                    complete: results => processData(results, 'Party') // Process Party data
+                });
+                Papa.parse(barCSV, {
+                    header: true,
+                    complete: results => processData(results, 'Bar') // Process Bar data
+                });
+            }).catch(error => console.error("Error loading CSV files:", error)) // Log any errors
+                .finally(() => createCharts()); // Once data is loaded and processed, create the charts
+        }
+
+        // Function to combine the smallest data items into an "Others" category
+        function combineSmallest(data, count) {
+            // If there are fewer categories than 'count', return the data as is
+            if (data.length <= count) return data;
+
+            // Sort data by value in ascending order
+            data.sort((a, b) => a.value - b.value);
+
+            // Get the smallest 'count' categories
+            var smallest = data.slice(0, count);
+
+            // Combine the smallest categories into a single "Others" category
+            var combinedValue = smallest.reduce((acc, curr) => acc + curr.value, 0);
+            var combinedData = data.slice(count).concat({
+                label: 'Others', // Label for the combined category
+                value: combinedValue
+            });
+
+            return combinedData;
+        }
+
+        // Function to create a pie chart for a specific data category (parties, airbnbs, bars)
+        function createPieChart(containerId, dataKey, title, smallestCount) {
+            // Set chart dimensions and radius
+            var width = 450, height = 450, radius = Math.min(width, height) / 2 * 0.9; // 10% smaller than the chart dimensions
+
+            // Create SVG element and group to hold the pie chart
+            var svg = d3.select(containerId).append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g")
+                .attr("transform", `translate(${width / 2 - 20},${height / 2 + 30})`); // Adjusted left shift for better placement
+
+            // Define color scale
+            var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+            // Pie chart generator that computes arc angles based on data
+            var pie = d3.pie()
+                .value(d => d.value); // Set value accessor for each slice
+
+            // Define arc paths (for slices and labels)
+            var path = d3.arc()
+                .outerRadius(radius - 10)
+                .innerRadius(0);
+
+            var label = d3.arc()
+                .outerRadius(radius - 40)
+                .innerRadius(radius - 40);
+
+            // Prepare the data by converting borough data into an array of objects
+            var data = Object.keys(boroughData).map(borough => {
+                return { label: capitalizeFirstLetter(borough), value: boroughData[borough][dataKey] };
+            });
+
+            // Combine the smallest data points into an "Others" category
+            data = combineSmallest(data, smallestCount);
+
+            // Append each slice of the pie chart
+            var arc = svg.selectAll(".arc")
+                .data(pie(data))
+                .enter().append("g")
+                .attr("class", "arc");
+
+            // Append the path for each slice
+            arc.append("path")
+                .attr("d", path)
+                .attr("fill", d => color(d.data.label)); // Set the color of each slice
+
+            // Append labels for each slice
+            arc.append("text")
+                .attr("transform", d => `translate(${label.centroid(d)})`)
+                .attr("dy", "0.35em")
+                .text(d => d.data.label);
+
+            // Append percentage labels for each slice
+            arc.append("text")
+                .attr("transform", d => {
+                    var pos = label.centroid(d);
+                    pos[1] += 20; // Move the percentage text downward
+                    return `translate(${pos})`;
+                })
+                .attr("dy", "0.35em")
+                .text(d => `${parseFloat((d.endAngle - d.startAngle) / (2 * Math.PI) * 100).toFixed(2)}%`);
+
+            // Add the title to the chart
+            svg.append("text")
+                .attr("x", 0)
+                .attr("y", 0 - (height / 2))
+                .attr("text-anchor", "middle")
+                .style("font-size", "24px")
+                .style("fill", "white")
+                .style("font-family", "Arial, sans-serif")
+                .text(title);
+        }
+
+        // Function to create all the charts
+        function createCharts() {
+            // Create individual pie charts for parties, airbnbs, and bars
+            createPieChart("#chart1", "parties", "Distribution of Parties", 3);
+            createPieChart("#chart2", "airbnb", "Distribution of AirBNBs", 4);
+            createPieChart("#chart3", "bars", "Distribution of Bars", 3);
+        }
+
+        // Fetch data and generate charts
+        fetchData();
+    </script>
+</body>
+
+</html>

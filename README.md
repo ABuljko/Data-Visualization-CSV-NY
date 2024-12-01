@@ -68,4 +68,3 @@ Key CSS Styles:
     The map initially appears hidden but can "grow" to fill the screen on demand using smooth transitions.
     
 
-6.Open a Pull Request.
